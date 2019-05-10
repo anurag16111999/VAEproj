@@ -30,6 +30,8 @@ from __future__ import division
 from __future__ import print_function
 from csv import reader
 
+# import
+
 from keras.layers import Lambda, Input, Dense
 # keras lambda layer
 from keras.models import Model
@@ -66,26 +68,73 @@ import random as rd
 # In[2]:
 
 def classcrossentropy(inputs,outputs):
-    print(type(inputs))
-    if(runmode == "single"):
-        return binary_crossentropy(inputs,outputs)
-
-    imlabel = 0
-    i1 = 0
-    for im1 in flowerlist:
-        if(im1 == inputs):
-            imlabel = labels[i1]
-            break
-        i1 = i1+1
-    print(imlabel)
-#     for key in dict1:    
     loss = 0
-    i1 = 0
-    for image1 in flowerlist:
-        if(labels[i1] == imlabel):
-            loss = loss + binary_crossentropy(image1,outputs)
-        i1 += 1
+    i = 0
+
+
+    # print(tf.shape(inputs))
+    # print(outputs.shape)
+    # print(inputs[0].shape)
+    # print(inputs[1].shape)
+    
+    # print(inputs.shape)
+    #
+    j = 0
+    # return binary_crossentropy(inputs[0],outputs)
+    inputim = inputs[0]
+    inputlabel = inputs[1]
+
+    for i in range(batch_size):
+        # j = 0
+        for j in range(batch_size):
+            # j+= 1
+            # input1 = inputim[i]
+            input2 = inputim[j]
+            k1 = inputlabel[i]
+            k2 = inputlabel[j]
+            output1 = outputs[i]
+            # print(k1)
+            # print(k2)
+            # if(k1 == k2):
+            loss = loss + binary_crossentropy(input2,output1)
+        # i+= 1
     return loss
+
+
+
+
+    # print(inputs1.shape)
+    # # if(runmode == "single"):
+    # # return binary_crossentropy(inputs,outputs)
+    
+
+    # i = 0
+    # for inputs in inputs1:
+    #     outputs = outputs1[i]
+    #     imlabel = 0
+    #     i1 = 0
+    #     for im1 in flowerlist:
+    #         # if(im1 == inputs):
+    #         if(np.array_equal(im1,inputs)):
+    #             imlabel = labels[i1]
+    #             break
+    #         i1 = i1+1
+    #     print(imlabel)
+    # #     for key in dict1:    
+    #     loss = 0
+    #     i1 = 0
+    #     for image1 in flowerlist:
+    #         if(labels[i1] == imlabel):
+    #             if(loss == 0):
+    #                 loss = binary_crossentropy(image1,outputs)
+    #             else:
+    #                 loss = loss + binary_crossentropy(image1,outputs)
+    #         i1 += 1
+    #     # return binary_crossentropy(inputs,outputs)
+    #     print(loss)
+    #     print(binary_crossentropy(image1,outputs))
+    #     i = i+1
+    # return K.sum(loss)
 
 
 # In[2]:
@@ -199,6 +248,8 @@ def load_csv(filename):
 dict1 = {}
 mypath = "/home/anurag/Desktop/projects/VAEproj/102flowers/jpg"
 onlyfiles = [f for f in listdir(mypath) if isfile(join(mypath, f))]
+# sort(onlyfiles)
+onlyfiles.sort()
 filename = 'FileName.csv'
 
 labels = load_csv(filename)
@@ -217,34 +268,64 @@ for image in onlyfiles:
     if(image[-3:] != "jpg"):
         continue
     # i1 = i1 + 1
-    # print()
+    # print("efrffrwf")
+
     im1 = mypath+"/"+ image
     # print(im1)
+    # print(labels[i1])
     im = imread(im1)
-    res = cv2.resize(im, dsize=(100,100), interpolation=cv2.INTER_CUBIC)
+    res = cv2.resize(im, dsize=(50,50), interpolation=cv2.INTER_CUBIC)
     #res = cv2.resize(im, dsize=(500,500))
     # res = im
+    # k1
     k1 = np.reshape(res,-1)
+    # np.append(k1,labels[i1])
+    # print(k)
     k1 = list(k1)
+    k1.append(labels[i1])
+    # print(k1)
+
 #     dict1[k1] = labels[i1] 
     # print(k1.shape)
         # print(i1)
     print(i1)
     featurestotal.append(k1)
     i1 = i1+ 1
-    # if(i1 == seltol + 1):
-        # break
+    if(i1 == 500):
+        break
+
 
 
 flowerlist = []
 rd.shuffle(featurestotal)
-flowerlist.extend(featurestotal)
+# flowerlist.extend(featurestotal)
 
-x_train = featurestotal[:7000]
-x_test = featurestotal[7000:]
+# flowerlist contains the required entries
+
+
+
+x_train = featurestotal[:400]
+x_test = featurestotal[400:]
+
 x_train = np.array(x_train)
 x_test = np.array(x_test)
 
+
+x_trainlabel = x_train[:,7500]
+x_train = x_train[:,0:7500]
+
+x_testlabel = x_test[:,7500]
+x_test = x_test[:,0:7500]
+
+
+
+# x_trainlabel = np.array(x_trainlabel)
+# x_testlabel = np.array(x_testlabel)
+
+# x_train
+
+
+# print(classcrossentropy(x_train[0],x_train[1]))
 # MNIST dataset
 # (x_train, y_train), (x_test, y_test) = mnist.load_data()
 
@@ -252,9 +333,9 @@ x_test = np.array(x_test)
 # In[3]:
 
 
-image_size = x_train[0].shape[0]
-print(image_size)
-original_dim = image_size * image_size
+# image_size = x_train[0].shape[0]
+# print(image_size)
+original_dim = 7500
 # x_train = np.reshape(x_train, [-1, original_dim])
 # x_test = np.reshape(x_test, [-1, original_dim])
 # x_train = x_train.astype('float32') / 255
@@ -262,8 +343,8 @@ original_dim = image_size * image_size
 
 # network parameters
 input_shape = (original_dim, )
-print("input_shape")
-print(input_shape)
+# print("input_shape")
+# print(input_shape)
 intermediate_dim = 512
 batch_size = 128
 latent_dim = 2
@@ -271,24 +352,32 @@ epochs = 50
 
 # VAE model = encoder + decoder
 # build encoder model
-inputs = Input(shape=input_shape, name='encoder_input')
-x = Dense(intermediate_dim, activation='relu')(inputs)
+input1 = Input(shape=input_shape, name='encoder_input_im')
+input2 = Input(shape=(1,), name='encoder_input_label')
+# inputs = Input(shape=1, name='encoder_input_label')
+x = Dense(intermediate_dim, activation='relu')(input1)
 z_mean = Dense(latent_dim, name='z_mean')(x)
 z_log_var = Dense(latent_dim, name='z_log_var')(x)
 
+inps = [input1,input2]
 # use reparameterization trick to push the sampling out as input
 # note that "output_shape" isn't necessary with the TensorFlow backend
 z = Lambda(sampling, output_shape=(latent_dim,), name='z')([z_mean, z_log_var])
 
 # instantiate encoder model
-encoder = Model(inputs, [z_mean, z_log_var, z], name='encoder')
+
+# encoder = Model(inputs, [z_mean, z_log_var, z], name='encoder')
+# encoder = Model(inputs = [input1,input2], [z_mean, z_log_var, z], name='encoder')
+encoder = Model(inps, [z_mean, z_log_var, z], name='encoder')
 encoder.summary()
 # plot_model(encoder, to_file='vae_mlp_encoder.png', show_shapes=True)
 
 # build decoder model
 latent_inputs = Input(shape=(latent_dim,), name='z_sampling')
+
 x = Dense(intermediate_dim, activation='relu')(latent_inputs)
 outputs = Dense(original_dim, activation='sigmoid')(x)
+
 
 # instantiate decoder model
 decoder = Model(latent_inputs, outputs, name='decoder')
@@ -296,8 +385,37 @@ decoder.summary()
 # plot_model(decoder, to_file='vae_mlp_decoder.png', show_shapes=True)
 
 # instantiate VAE model
-outputs = decoder(encoder(inputs)[2])
-vae = Model(inputs, outputs, name='vae_mlp')
+outputs = decoder(encoder(inps)[2])
+vae = Model(inps, outputs, name='vae_mlp')
+
+
+# inputs = Input(shape=input_shape, name='encoder_input')
+# x = Dense(intermediate_dim, activation='relu')(inputs)
+# z_mean = Dense(latent_dim, name='z_mean')(x)
+# z_log_var = Dense(latent_dim, name='z_log_var')(x)
+
+# # use reparameterization trick to push the sampling out as input
+# # note that "output_shape" isn't necessary with the TensorFlow backend
+# z = Lambda(sampling, output_shape=(latent_dim,), name='z')([z_mean, z_log_var])
+
+# # instantiate encoder model
+# encoder = Model(inputs, [z_mean, z_log_var, z], name='encoder')
+# encoder.summary()
+# # plot_model(encoder, to_file='vae_mlp_encoder.png', show_shapes=True)
+
+# # build decoder model
+# latent_inputs = Input(shape=(latent_dim,), name='z_sampling')
+# x = Dense(intermediate_dim, activation='relu')(latent_inputs)
+# outputs = Dense(original_dim, activation='sigmoid')(x)
+
+# # instantiate decoder model
+# decoder = Model(latent_inputs, outputs, name='decoder')
+# decoder.summary()
+# # plot_model(decoder, to_file='vae_mlp_decoder.png', show_shapes=True)
+
+# # instantiate VAE model
+# outputs = decoder(encoder(inputs)[2])
+# vae = Model(inputs, outputs, name='vae_mlp')
 
 if __name__ == '__main__':
     # dict1 = {}
@@ -312,19 +430,19 @@ if __name__ == '__main__':
                         help=help_, action='store_true')
     args = parser.parse_args()
     models = (encoder, decoder)
-    data = (x_test, y_test)
+    # data = (x_test, y_test)
 
 # here1
     # VAE loss = mse_loss or xent_loss + kl_loss
     
-    runmode = input("single or class encoder ")
-
+    # runmode = input("single or class encoder ")
+    z33 = np.identity(1000)
 
 
     if args.mse:
         reconstruction_loss = mse(inputs, outputs)
     else:
-        reconstruction_loss = classcrossentropy(inputs,
+        reconstruction_loss = classcrossentropy(inps,
                                                   outputs)
 
     reconstruction_loss *= original_dim
@@ -343,10 +461,10 @@ if __name__ == '__main__':
         vae.load_weights(args.weights)
     else:
         # train the autoencoder
-        vae.fit(x_train,
+        vae.fit([x_train,x_trainlabel],
                 epochs=epochs,
                 batch_size=batch_size,
-                validation_data=(x_test, None))
+                validation_data=([x_test,x_testlabel], None))
         vae.save_weights('vae_mlp_mnist.h5')
 
 
