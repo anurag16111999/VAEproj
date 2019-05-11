@@ -10,6 +10,12 @@
 # In[1]:
 
 
+#!/usr/bin/env python
+
+
+# In[1]:
+
+
 '''Example of VAE on MNIST dataset using MLP
 
 The VAE has a modular design. The encoder, decoder and VAE
@@ -45,6 +51,7 @@ import matplotlib.pyplot as plt
 import argparse
 import os
 
+import tensorflow as tf
 # from keras.layers import Input, Dense
 # from keras.models import Model
 import csv
@@ -67,9 +74,37 @@ import random as rd
 
 # In[2]:
 
+# inputno = 0/0
+# inp11 = 0
+# out11 = 0
+
+# def getnewloss(x2):
+
+#     outputno = outputno + 1
+#     return binary_crossentropy(x1,x2)
+
+
+# def getloss(x1):
+#     # output = outputs[inputno]
+#     # inputindex = imindex[inputno]
+#     outputno = 0
+#     losses1 = tf.map_fn(lambda x : getnewloss(x),outputs)
+#     inputno = inputno + 1
+#     return tf.reduce_sum(losses1)
+
 def classcrossentropy(inputs,outputs):
     loss = 0
     i = 0
+
+    inputs = inputs[1]
+    # outputs = 
+    recon_loss = -tf.reduce_sum(
+    inputs * tf.log(1e-10+outputs) + 
+    (1-inputs) * tf.log(1e-10+1-outputs), 
+    axis=1
+)
+
+
 
 
     # print(tf.shape(inputs))
@@ -79,26 +114,79 @@ def classcrossentropy(inputs,outputs):
     
     # print(inputs.shape)
     #
-    j = 0
-    # return binary_crossentropy(inputs[0],outputs)
-    inputim = inputs[0]
-    inputlabel = inputs[1]
+    return recon_loss
+    # return binary_crossentropy(inputs[1],outputs)
+    
+#     tf.map_fn(
+#     fn,
+#     elems,
+#     dtype=None,
+#     parallel_iterations=None,
+#     back_prop=True,
+#     swap_memory=False,
+#     infer_shape=True,
+#     name=None
+# )
+                                   
+    # inp11 = inputs[0]
+    # out11 = outputs                                                     
+    # iminput = inputs[0]
+    # imindex = inputs[1]
+    # indices = [i for i, x in enumerate(my_list) if x == "whatever"]
+    # outputs[:] = outputs[:].append(imindex)
+    # for rec in outputs:
+        # loss = rec
+    # outputno = 0
+    # inputno = 0
+    # losses = tf.map_fn(lambda x : getloss(x),)
 
-    for i in range(batch_size):
-        # j = 0
-        for j in range(batch_size):
-            # j+= 1
-            # input1 = inputim[i]
-            input2 = inputim[j]
-            k1 = inputlabel[i]
-            k2 = inputlabel[j]
-            output1 = outputs[i]
-            # print(k1)
-            # print(k2)
-            # if(k1 == k2):
-            loss = loss + binary_crossentropy(input2,output1)
-        # i+= 1
-    return loss
+    # return tf.reduce_sum(losses,axis = 1)
+
+    # inputs = inputs[0]
+
+    # epsilon = 1e-10
+    # epsilon = epsilon*np.ones((128,7500))
+
+    # recon_loss = -tf.reduce_sum(
+    #     inputs * tf.log(1e-10+outputs) + 
+    #     (1-inputs) * tf.log(1e-10+1-outputs), 
+    #     axis=1
+    # )
+
+    # recon_loss = tf.reduce_mean(recon_loss)
+
+    # Latent loss
+    # KL divergence: measure the difference between two distributions
+    # Here we measure the divergence between 
+    # the latent distribution and N(0, 1)
+    # latent_loss = -0.5 * tf.reduce_sum(
+    #     1 + z_log_sigma_sq - tf.square(z_mu) - 
+    #     tf.exp(z_log_sigma_sq), axis=1)
+    # latent_loss = tf.reduce_mean(latent_loss)
+
+    # total_loss = recon_loss + latent_loss
+    # return recon_loss
+
+    # j = 0
+    # # return binary_crossentropy(inputs[0],outputs)
+    # inputim = inputs[0]
+    # inputlabel = inputs[1]
+
+    # for i in range(batch_size):
+    #     # j = 0
+    #     for j in range(batch_size):
+    #         # j+= 1
+    #         # input1 = inputim[i]
+    #         input2 = inputim[j]
+    #         k1 = inputlabel[i]
+    #         k2 = inputlabel[j]
+    #         output1 = outputs[i]
+    #         # print(k1)
+    #         # print(k2)
+    #         # if(k1 == k2):
+    #         loss = loss + binary_crossentropy(input2,output1)
+    #     # i+= 1
+    # return loss
 
 
 
@@ -245,6 +333,9 @@ def load_csv(filename):
 # In[9]:
 
 
+# In[17]:
+
+
 dict1 = {}
 mypath = "/home/anurag/Desktop/projects/VAEproj/102flowers/jpg"
 onlyfiles = [f for f in listdir(mypath) if isfile(join(mypath, f))]
@@ -274,10 +365,13 @@ for image in onlyfiles:
     # print(im1)
     # print(labels[i1])
     im = imread(im1)
+    im = im/float(255)
+    # print(im)
     res = cv2.resize(im, dsize=(50,50), interpolation=cv2.INTER_CUBIC)
     #res = cv2.resize(im, dsize=(500,500))
     # res = im
     # k1
+
     k1 = np.reshape(res,-1)
     # np.append(k1,labels[i1])
     # print(k)
@@ -291,8 +385,8 @@ for image in onlyfiles:
     print(i1)
     featurestotal.append(k1)
     i1 = i1+ 1
-    if(i1 == 500):
-        break
+    # if(i1 == 500):
+        # break
 
 
 
@@ -304,20 +398,90 @@ rd.shuffle(featurestotal)
 
 
 
-x_train = featurestotal[:400]
-x_test = featurestotal[400:]
+x_train = featurestotal[:7000]
+x_test = featurestotal[7000:]
 
-x_train = np.array(x_train)
-x_test = np.array(x_test)
+# x_train = featurestotal[:400]
+# x_test = featurestotal[400:]
+
+
+x_train = np.array(x_train,dtype = float)
+x_test = np.array(x_test,dtype = float)
+
+print(x_train)
+print(x_test)
 
 
 x_trainlabel = x_train[:,7500]
 x_train = x_train[:,0:7500]
-
 x_testlabel = x_test[:,7500]
 x_test = x_test[:,0:7500]
 
 
+a = np.zeros(7500,dtype = float)
+ # = np.repeat(a[:, :, np.newaxis], 3, axis=2)
+
+x_trainlabelsum = np.repeat(a[np.newaxis,:], 102,axis = 0)
+x_testlabelsum = np.repeat(a[np.newaxis,:], 102,axis = 0)
+print(x_trainlabelsum[0].shape)
+
+# x_testlabelsum = []
+
+
+# In[18]:
+
+
+trainnum = np.zeros(102)
+testnum = np.zeros(102)
+
+# In[18]:
+
+
+i = 0
+for fq in x_trainlabel:
+    image = x_train[i]
+    fq = int(fq)
+    fq = fq-1
+#     print(fq)
+#     print(x_trainlabelsum[fq].shape)
+#     print(type(image))
+#     print(image.shape)
+#     print(x_trainlabelsum[fq])
+# #     print(type(image))
+#     print(image)
+    
+    x_trainlabelsum[fq] = np.add(x_trainlabelsum[fq],image)
+    trainnum[fq] = trainnum[fq] + 1
+    i = i+1
+
+i = 0
+for fq in x_testlabel:
+    fq = fq-1
+    im = x_test[i]
+    fq = int(fq)
+    x_testlabelsum[fq] = np.add(x_testlabelsum[fq],im)
+    testnum[fq] = testnum[fq] + 1
+    i = i+1
+
+
+x_train2 = np.copy(x_train)
+x_test2 = np.copy(x_test)
+
+i = 0
+for d2 in x_trainlabel:
+    d2 = int(d2)
+    d2 = d2-1
+    x_train2[i] = x_trainlabelsum[d2]/(float(trainnum[d2]))
+    i = i+1
+
+i = 0
+for d2 in x_testlabel:
+    d2 = int(d2)
+    d2 = d2-1
+    x_test2[i] = x_testlabelsum[d2]/(float(trainnum[d2]))
+    i = i+1
+
+# x_train
 
 # x_trainlabel = np.array(x_trainlabel)
 # x_testlabel = np.array(x_testlabel)
@@ -333,6 +497,9 @@ x_test = x_test[:,0:7500]
 # In[3]:
 
 
+# In[19]:
+
+
 # image_size = x_train[0].shape[0]
 # print(image_size)
 original_dim = 7500
@@ -340,7 +507,7 @@ original_dim = 7500
 # x_test = np.reshape(x_test, [-1, original_dim])
 # x_train = x_train.astype('float32') / 255
 # x_test = x_test.astype('float32') / 255
-
+# print(im)
 # network parameters
 input_shape = (original_dim, )
 # print("input_shape")
@@ -353,7 +520,8 @@ epochs = 50
 # VAE model = encoder + decoder
 # build encoder model
 input1 = Input(shape=input_shape, name='encoder_input_im')
-input2 = Input(shape=(1,), name='encoder_input_label')
+input2 = Input(shape=input_shape, name='encoder_input_imsum')
+
 # inputs = Input(shape=1, name='encoder_input_label')
 x = Dense(intermediate_dim, activation='relu')(input1)
 z_mean = Dense(latent_dim, name='z_mean')(x)
@@ -436,7 +604,7 @@ if __name__ == '__main__':
     # VAE loss = mse_loss or xent_loss + kl_loss
     
     # runmode = input("single or class encoder ")
-    z33 = np.identity(1000)
+    # z33 = np.identity(1000)
 
 
     if args.mse:
@@ -461,24 +629,38 @@ if __name__ == '__main__':
         vae.load_weights(args.weights)
     else:
         # train the autoencoder
-        vae.fit([x_train,x_trainlabel],
+        vae.fit([x_train,x_train2],
                 epochs=epochs,
                 batch_size=batch_size,
-                validation_data=([x_test,x_testlabel], None))
+                validation_data=([x_test,x_test2], None))
         vae.save_weights('vae_mlp_mnist.h5')
 
 
+
+    # for i in test2
     # plot_results(models,
                  # data,
                  # batch_size=batch_size,
                  # model_name="vae_mlp")
 
+    encoder, decoder = models
+    # encoder, decoder = models
+    x_test, y_test = [x_train,x_train2],x_trainlabel
+    # os.makedirs(model_name, exist_ok=True)
 
+    # filename = os.path.join(model_name, "vae_mean.png")
+    # display a 2D plot of the digit classes in the latent space
+    z_mean, _, _ = encoder.predict(x_test,
+                                   batch_size=batch_size)
+    plt.figure(figsize=(12, 10))
+    plt.scatter(z_mean[:, 0], z_mean[:, 1], c=y_test)
+    plt.colorbar()
+    plt.xlabel("z[0]")
+    plt.ylabel("z[1]")
+    # plt.savefig(filename)
+    plt.show()
 # In[ ]:
 
 
 # In[ ]:
-
-
-
 
