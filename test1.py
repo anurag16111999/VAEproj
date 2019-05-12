@@ -39,6 +39,7 @@ from csv import reader
 # import
 
 from keras.layers import Lambda, Input, Dense
+from keras.layers import Dropout
 # keras lambda layer
 from keras.models import Model
 # from keras.datasets import mnist
@@ -65,7 +66,7 @@ from sklearn.decomposition import PCA
 from numpy import linalg as LA
 import matplotlib.pyplot as plt
 import random as rd
-
+# import cv2
 
 # reparameterization trick
 # instead of sampling from Q(z|X), sample epsilon = N(0,I)
@@ -99,11 +100,12 @@ def classcrossentropy(inputs,outputs):
     inputs = inputs[1]
     # outputs = 
     recon_loss = -tf.reduce_sum(
-    inputs * tf.log(1e-10+outputs) + 
-    (1-inputs) * tf.log(1e-10+1-outputs), 
+    inputs * tf.log(1e-5+outputs) + 
+    (1-inputs) * tf.log(1e-5+1-outputs), 
     axis=1
 )
 
+    return recon_loss
 
 
 
@@ -114,7 +116,6 @@ def classcrossentropy(inputs,outputs):
     
     # print(inputs.shape)
     #
-    return recon_loss
     # return binary_crossentropy(inputs[1],outputs)
     
 #     tf.map_fn(
@@ -145,7 +146,7 @@ def classcrossentropy(inputs,outputs):
     # inputs = inputs[0]
 
     # epsilon = 1e-10
-    # epsilon = epsilon*np.ones((128,7500))
+    # epsilon = epsilon*np.ones((128,2048))
 
     # recon_loss = -tf.reduce_sum(
     #     inputs * tf.log(1e-10+outputs) + 
@@ -336,16 +337,16 @@ def load_csv(filename):
 # In[17]:
 
 
-dict1 = {}
-mypath = "/home/anurag/Desktop/projects/VAEproj/102flowers/jpg"
-onlyfiles = [f for f in listdir(mypath) if isfile(join(mypath, f))]
+# dict1 = {}
+# mypath = "/home/anurag/projects/VAEProj/102flowers/jpg"
+# onlyfiles = [f for f in listdir(mypath) if isfile(join(mypath, f))]
 # sort(onlyfiles)
-onlyfiles.sort()
-filename = 'FileName.csv'
+# onlyfiles.sort()
+filename = 'flowersXception.csv'
 
-labels = load_csv(filename)
-labels = labels[0]    
-print(onlyfiles)
+featurestotal = load_csv(filename)
+# labels = labels[0]    
+# print(onlyfiles)
 # i1 = 1
 # seltol = 1300
 #seltol = 10
@@ -353,44 +354,47 @@ print(onlyfiles)
 # for selected1 in [200]:
 # samplpositive = 600
 #samplpositive = 10
-featurestotal = []
-i1 = 0
-for image in onlyfiles:
-    if(image[-3:] != "jpg"):
-        continue
-    # i1 = i1 + 1
-    # print("efrffrwf")
+# featurestotal = []
+# i1 = 0
+# for image in onlyfiles:
+#     if(image[-3:] != "jpg"):
+#         continue
+#     # i1 = i1 + 1
+#     # print("efrffrwf")
 
-    im1 = mypath+"/"+ image
-    # print(im1)
-    # print(labels[i1])
-    im = imread(im1)
-    im = im/float(255)
-    # print(im)
-    res = cv2.resize(im, dsize=(50,50), interpolation=cv2.INTER_CUBIC)
-    #res = cv2.resize(im, dsize=(500,500))
-    # res = im
-    # k1
-
-    k1 = np.reshape(res,-1)
-    # np.append(k1,labels[i1])
-    # print(k)
-    k1 = list(k1)
-    k1.append(labels[i1])
-    # print(k1)
-
-#     dict1[k1] = labels[i1] 
-    # print(k1.shape)
-        # print(i1)
-    print(i1)
-    featurestotal.append(k1)
-    i1 = i1+ 1
-    # if(i1 == 500):
-        # break
+#     im1 = mypath+"/"+ image
+#     # print(im1)
+#     # print(labels[i1])
+#     # im = imread(im1,cv2.COLOR_BGR2GRAY)
+#     im = imread(im1)
+#     im = im/float(255)
+#     # print(im)
+#     res = cv2.resize(im, dsize=(50,50), interpolation=cv2.INTER_CUBIC)
+#     #res = cv2.resize(im, dsize=(500,500))
+#     # res = im
+#     # k1
 
 
+#     k1 = np.reshape(res,-1)
+#     # np.append(k1,labels[i1])
+#     # print(k)
+#     k1 = list(k1)
+#     k1.append(labels[i1])
+#     # print(k1)
 
-flowerlist = []
+# #     dict1[k1] = labels[i1] 
+#     # print(k1.shape)
+#         # print(i1)
+#     print(i1)
+#     featurestotal.append(k1)
+#     i1 = i1+ 1
+#     # if(i1 == 85):
+#         # break
+
+
+
+# flowerlist = []
+
 rd.shuffle(featurestotal)
 # flowerlist.extend(featurestotal)
 
@@ -400,6 +404,11 @@ rd.shuffle(featurestotal)
 
 x_train = featurestotal[:7000]
 x_test = featurestotal[7000:]
+
+
+# x_train = featurestotal[:4000]
+# x_test = featurestotal[4000:]
+
 
 # x_train = featurestotal[:400]
 # x_test = featurestotal[400:]
@@ -412,13 +421,16 @@ print(x_train)
 print(x_test)
 
 
-x_trainlabel = x_train[:,7500]
-x_train = x_train[:,0:7500]
-x_testlabel = x_test[:,7500]
-x_test = x_test[:,0:7500]
+x_trainlabel = x_train[:,2048]
+x_train = x_train[:,0:2048]
+x_testlabel = x_test[:,2048]
+x_test = x_test[:,0:2048]
+
+print(x_testlabel)
+print(x_trainlabel)
 
 
-a = np.zeros(7500,dtype = float)
+a = np.zeros(2048,dtype = float)
  # = np.repeat(a[:, :, np.newaxis], 3, axis=2)
 
 x_trainlabelsum = np.repeat(a[np.newaxis,:], 102,axis = 0)
@@ -441,6 +453,7 @@ i = 0
 for fq in x_trainlabel:
     image = x_train[i]
     fq = int(fq)
+    # print(fq)
     fq = fq-1
 #     print(fq)
 #     print(x_trainlabelsum[fq].shape)
@@ -502,7 +515,7 @@ for d2 in x_testlabel:
 
 # image_size = x_train[0].shape[0]
 # print(image_size)
-original_dim = 7500
+original_dim = 2048
 # x_train = np.reshape(x_train, [-1, original_dim])
 # x_test = np.reshape(x_test, [-1, original_dim])
 # x_train = x_train.astype('float32') / 255
@@ -513,9 +526,18 @@ input_shape = (original_dim, )
 # print("input_shape")
 # print(input_shape)
 intermediate_dim = 512
+intermediate_dim1 = 512
+
 batch_size = 128
 latent_dim = 2
-epochs = 50
+epochs = 300
+
+
+# model.add(Dense(60, input_dim=60, kernel_initializer='normal', activation='relu', kernel_constraint=maxnorm(3)))
+# model.add(Dropout(0.2))
+# model.add(Dense(30, kernel_initializer='normal', activation='relu', kernel_constraint=maxnorm(3)))
+# model.add(Dropout(0.2))
+# model.add(Dense(1, kernel_initializer='normal', activation='sigmoid'))
 
 # VAE model = encoder + decoder
 # build encoder model
@@ -523,7 +545,11 @@ input1 = Input(shape=input_shape, name='encoder_input_im')
 input2 = Input(shape=input_shape, name='encoder_input_imsum')
 
 # inputs = Input(shape=1, name='encoder_input_label')
+# drop1 = Dropout(0.2)(input1)
 x = Dense(intermediate_dim, activation='relu')(input1)
+x = Dense(intermediate_dim1, activation='relu')(x)
+# x = Dense(intermediate_dim1, activation='relu')(x)
+# drop1 = Dropout(0.2)(x)
 z_mean = Dense(latent_dim, name='z_mean')(x)
 z_log_var = Dense(latent_dim, name='z_log_var')(x)
 
@@ -544,6 +570,10 @@ encoder.summary()
 latent_inputs = Input(shape=(latent_dim,), name='z_sampling')
 
 x = Dense(intermediate_dim, activation='relu')(latent_inputs)
+# drop2 = Dropout(0.2)(x)
+x = Dense(intermediate_dim1, activation='relu')(x)
+# x = Dense(intermediate_dim1, activation='relu')(x)
+
 outputs = Dense(original_dim, activation='sigmoid')(x)
 
 
