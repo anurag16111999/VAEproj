@@ -402,8 +402,8 @@ rd.shuffle(featurestotal)
 
 
 
-x_train = featurestotal[:7000]
-x_test = featurestotal[7000:]
+x_train = featurestotal[:8180]
+x_test = featurestotal[8180:]
 
 
 # x_train = featurestotal[:4000]
@@ -447,6 +447,8 @@ trainnum = np.zeros(102)
 testnum = np.zeros(102)
 
 # In[18]:
+trainonehotlabel = []
+testonehotlabel = []
 
 
 i = 0
@@ -465,6 +467,10 @@ for fq in x_trainlabel:
     
     x_trainlabelsum[fq] = np.add(x_trainlabelsum[fq],image)
     trainnum[fq] = trainnum[fq] + 1
+    arr = np.zeros(102)
+    arr[fq] = 1
+    trainonehotlabel.append(arr[fq])
+
     i = i+1
 
 i = 0
@@ -474,8 +480,17 @@ for fq in x_testlabel:
     fq = int(fq)
     x_testlabelsum[fq] = np.add(x_testlabelsum[fq],im)
     testnum[fq] = testnum[fq] + 1
+
+    arr = np.zeros(102)
+    arr[fq] = 1
+    trainonehotlabel.append(arr[fq])
+
     i = i+1
 
+
+print(trainonehotlabel)
+print(testonehotlabel)
+exit()
 
 x_train2 = np.copy(x_train)
 x_test2 = np.copy(x_test)
@@ -525,8 +540,10 @@ original_dim = 2048
 input_shape = (original_dim, )
 # print("input_shape")
 # print(input_shape)
-intermediate_dim = 512
-intermediate_dim1 = 512
+intermediate_dim = 512 # of original layers
+intermediate_dim1 = 512 # of extra layers
+classifierdim = 512 # of classifiers
+classifieroutputdim = 102
 
 batch_size = 128
 latent_dim = 2
@@ -543,11 +560,12 @@ epochs = 300
 # build encoder model
 input1 = Input(shape=input_shape, name='encoder_input_im')
 input2 = Input(shape=input_shape, name='encoder_input_imsum')
-
+input3 = Input(shape=input_shape,name='encoder_input_labels')
 # inputs = Input(shape=1, name='encoder_input_label')
 # drop1 = Dropout(0.2)(input1)
 x = Dense(intermediate_dim, activation='relu')(input1)
 x = Dense(intermediate_dim1, activation='relu')(x)
+
 # x = Dense(intermediate_dim1, activation='relu')(x)
 # drop1 = Dropout(0.2)(x)
 z_mean = Dense(latent_dim, name='z_mean')(x)
@@ -567,7 +585,7 @@ encoder.summary()
 # plot_model(encoder, to_file='vae_mlp_encoder.png', show_shapes=True)
 
 # build decoder model
-latent_inputs = Input(shape=(latent_dim,), name='z_sampling')
+latent_inputs = Input(shape=(latent_dim,), name='z_samples')
 
 x = Dense(intermediate_dim, activation='relu')(latent_inputs)
 # drop2 = Dropout(0.2)(x)
@@ -582,9 +600,24 @@ decoder = Model(latent_inputs, outputs, name='decoder')
 decoder.summary()
 # plot_model(decoder, to_file='vae_mlp_decoder.png', show_shapes=True)
 
+#building classifier models
+classifier_inputs = Input(shape=(latent_dim,), name="class1")
+
+x = Dense(classifierdim,activation = 'relu')(classifier_inputs)
+# x = Dense(classifierdim,activation = 'relu')(x)  # additional layer
+classifier_output = Dense(classifieroutputdim,activation = 'softmax')(x)
+
+classifier = Model(classifier_inputs,classifier_output,name="classifier")
+
+classifier.summary()
+
 # instantiate VAE model
-outputs = decoder(encoder(inps)[2])
-vae = Model(inps, outputs, name='vae_mlp')
+output1 = decoder(encoder(inps)[2])
+output2 = classifier(encoder(inps)[2]) # classifing on smaple values
+# output2 = classifier(encoder(inps)[0]) # classifing on z_means
+outputs = [output1,output2]
+
+vae = Model(inps, outputs, name='vae_mlp + classifier')
 
 
 # inputs = Input(shape=input_shape, name='encoder_input')

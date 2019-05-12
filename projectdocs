@@ -1,3 +1,4 @@
+
 Tip try adding the following attributes to your arrays to get more information about the memory layout, the length of one array element in bytes and the total consumed bytes by the array’s elements with the flags, itemsize, and nbytes attributes. You can test this out in the IPython console in the DataCamp Light chunk above!
 
 labels.index(label) //array index of value
@@ -17,6 +18,9 @@ images28 = [transform.resize(image, (28, 28)) for image in images]
 
 4. feature extraction and various CNN's comparision
 
+5. Maximum Mean Discrepancy (MMD) approach
+
+
 without rgb
 4000/4000 [==============================] - 5s 1ms/step - loss: 4045668.4920 - val_loss: 4169700.9333
 7000/7000 [==============================] - 7s 998us/step - loss: 4041802.2040 - val_loss: 3377982.7454
@@ -28,3 +32,5 @@ dropout = 0.5
 7000/7000 [==============================] - 9s 1ms/step - loss: 34789299.1863 - val_loss: 28738109.7140
 7000/7000 [==============================] - 10s 1ms/step - loss: 34549514.2446 - val_loss: 28346070.6526
 
+
+try on kaggle with 1e-[6-9]
