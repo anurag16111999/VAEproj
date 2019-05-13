@@ -20,6 +20,8 @@ images28 = [transform.resize(image, (28, 28)) for image in images]
 
 5. Maximum Mean Discrepancy (MMD) approach
 
+6. why is using Xception with pre-trained weights the best idea.
+
 
 without rgb
 4000/4000 [==============================] - 5s 1ms/step - loss: 4045668.4920 - val_loss: 4169700.9333
