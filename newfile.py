@@ -47,12 +47,13 @@ from csv import reader
 # from keras.datasets import mnist
 # from keras.models import Sequential
 from keras.layers import Dropout, Flatten
-from keras.layers import Conv2D, MaxPooling2D,Concatenate
+from keras.layers import Conv2D, MaxPooling2D
+from keras.layers.merge import Concatenate
 # import numpy as np
 
 
 from keras.layers import Lambda, Input, Dense
-from keras.layers import Dropout
+# from keras.layers import Dropout
 # keras lambda layer
 from keras.models import Model
 # from keras.datasets import mnist
@@ -108,22 +109,19 @@ import random as rd
 
 
 
-def classcrossentropy(inputs,outputs):
+def classcrossentropy(inputs,outputs,interlayer1,interlayer2):
     loss = 0
     i = 0
 
-    input1 = inputs[1]
+    input1 = interlayer1
     output1 = outputs[0]
-
-
     recon_loss = -tf.reduce_sum(
     input1 * tf.log(1e-5+output1) + 
     (1-input1) * tf.log(1e-5+1-output1), 
     axis=1
 )
-    input2 = inputs[2]
+    input2 = interlayer2
     output2 = outputs[1]
-    
     
 #     print(input2.shape)
 #     print(output2.shape)
@@ -353,13 +351,14 @@ def plot_results(models,
 def load_csv(filename):
     dataset = list()
     i = 0
+
     with open(filename, 'r') as file:
         csv_reader = reader(file)
         for row in csv_reader:
             i = i + 1
             if not row:
                 continue
-            if(i = 3000):
+            if(i == numsamples):
                 break
             dataset.append(row)
     return dataset
@@ -380,6 +379,7 @@ filename = './flowersXception.csv'
 # filename = 
 filename = './flowersimages__224_224.csv'
 # 
+numsamples = 300
 featurestotal = load_csv(filename)
 
 
@@ -461,13 +461,14 @@ featurestotal = load_csv(filename)
 
 rd.shuffle(featurestotal)
 # flowerlist.extend(featurestotal)
+# featurestotal = np.array(featurestotal)
 
 # flowerlist contains the required entries
 
 
-
-x_train = featurestotal[:2400]
-x_test = featurestotal[2400:]
+# numsamples
+x_train = featurestotal[:280]
+x_test = featurestotal[280:]
 
 
 # x_train = featurestotal[:4000]
@@ -477,6 +478,7 @@ x_test = featurestotal[2400:]
 # x_train = featurestotal[:400]
 # x_test = featurestotal[400:]
 
+del featurestotal
 
 x_train = np.array(x_train,dtype = float)
 # x_train =
@@ -486,22 +488,31 @@ print(x_train)
 print(x_test)
 
 
-x_trainlabel = x_train[:,2048]
-x_train = x_train[:,0:2048]
-x_testlabel = x_test[:,2048]
-x_test = x_test[:,0:2048]
+x_trainlabel = x_train[:,150528]
+x_train = x_train[:,0:150528]
+
+x_train = np.reshape(x_train,(280,224,224,3))
+x_testlabel = x_test[:,150528]
+x_test = x_test[:,0:150528]
+x_test = np.reshape(x_test,(19,224,224,3))
+
+# for i in range(x_train.shape[0]):
 
 x_train = x_train/255
 x_test = x_test/255
 
-print(x_testlabel)
-print(x_trainlabel)
+
+print(x_train.shape)
+print(x_test.shape)
+
+# print(x_testlabel)
+# print(x_trainlabel)
 
 
 # In[106]:
 
 
-a = np.zeros(2048,dtype = float)
+a = np.zeros(150528,dtype = float).reshape((224,224,3))
  # = np.repeat(a[:, :, np.newaxis], 3, axis=2)
 
 x_trainlabelsum = np.repeat(a[np.newaxis,:], 102,axis = 0)
@@ -618,14 +629,14 @@ for d2 in x_testlabel:
 
 # image_size = x_train[0].shape[0]
 # print(image_size)
-original_dim = 2048
+# original_dim = 150528
 # x_train = np.reshape(x_train, [-1, original_dim])
 # x_test = np.reshape(x_test, [-1, original_dim])
 # x_train = x_train.astype('float32') / 255
 # x_test = x_test.astype('float32') / 255
 # print(im)
 # network parameters
-input_shape = (original_dim, )
+# input_shape = (original_dim, )
 # print("input_shape")
 # print(input_shape)
 intermediate_dim = 512 # of original layers
@@ -644,32 +655,90 @@ epochs =500
 # model.add(Dropout(0.2))
 # model.add(Dense(1, kernel_initializer='normal', activation='sigmoid'))
 
-# VAE model = encoder + decoder
-# build encoder model
-input1 = Input(shape=input_shape, name='encoder_input_im')
-input2 = Input(shape=input_shape, name='encoder_input_imsum')
-input3 = Input(shape=(classifieroutputdim,),name='encoder_input_labels')
-# inputs = Input(shape=1, name='encoder_input_label')
-# drop1 = Dropout(0.2)(input1)
-x = Dense(intermediate_dim, activation='relu')(input1)
-x = Dense(intermediate_dim1, activation='relu')(x)
-# x = Dense(intermediate_dim1, activation='relu')(x)
+input_shape = (224,224,3,)
 
-# x = Dense(intermediate_dim1, activation='relu')(x)
+
+inps1 = Input(shape=input_shape,name="1")
+# inps2 = Input(shape=input_shape,name="1")
+# input2 = Input(shape=input_shape,name="1")
+# i1 = Concatenate()([inps1,inps2])
+
+x2 = Conv2D(4,(3,3),activation = 'relu',padding = 'same',name = '2')(inps1)
+x3 = Conv2D(4,(3,3),activation = 'relu',padding = 'same',name = '3')(x2)
+x4 = MaxPooling2D((2, 2), strides=(2, 2), name='block1_pool')(x3)
+# 
+
+y13 = MaxPooling2D((2, 2), strides=(2, 2), name='block2_pool')(x4)
+y12 = MaxPooling2D((2, 2), strides=(2, 2), name='block3_pool')(y13)
+y11 = MaxPooling2D((2, 2), strides=(2, 2), name='block4_pool')(y12)
+
+# x = Input(shape=input_shape,name="1")
+x5 = Conv2D(4,(3,3),activation = 'relu',padding = 'same',name = '4')(x4)
+x6 = Conv2D(4,(3,3),activation = 'relu',padding = 'same',name = '5')(x5)
+x7 = MaxPooling2D((2, 2), strides=(2, 2), name='block5_pool')(x6)
+
+# 
+
+y22 = MaxPooling2D((2, 2), strides=(2, 2), name='block6_pool')(x7)
+y21 = MaxPooling2D((2, 2), strides=(2, 2), name='block7_pool')(y22)
+
+
+# x = Input(shape=input_shape,name="1")
+
+
+# 3
+# layer for concatenation
+c1 = Concatenate()([x7,y13])
+
+x8 = Conv2D(4,(3,3),activation = 'relu',padding = 'same',name = '6')(c1)
+x9 = Conv2D(4,(3,3),activation = 'relu',padding = 'same',name = '7')(x8)
+x10 = MaxPooling2D((2, 2), strides=(2, 2), name='block8_pool')(x9)
+
+
+y31 = MaxPooling2D((2, 2), strides=(2, 2), name='block9_pool')(x10)
+# y21 = MaxPooling2D((2, 2), strides=(2, 2), name='block1_pool')(y22)
+
+# 2
+# layer for concatenation
+c2 = Concatenate()([x10,y12,y22])
+
+x11 = Conv2D(4,(3,3),activation = 'relu',padding = 'same',name = '8')(c2)
+x12 = Conv2D(4,(3,3),activation = 'relu',padding = 'same',name = '9')(x11)
+x13 = MaxPooling2D((2, 2), strides=(2, 2), name='block10_pool')(x12)
+
+# 1
+# layer for concatenation
+
+c3 = Concatenate()([x13,y11,y21,y31])
+x14 = Conv2D(4,(3,3),activation = 'relu',padding = 'same',name = '10')(c3)
+x15 = Conv2D(4,(3,3),activation = 'relu',padding = 'same',name = '11')(x14)
+x16 = MaxPooling2D((2, 2), strides=(2, 2), name='block11_pool')(x15)
+
+x17 = Flatten()(x16)
+
+featureextractor = Model(inps1,x17,name = "featureextractor")
+featureextractor.summary()
+
+
+# input1 = featureextractor(input1)
+# inp1 = Input(shape=(196,), name='encoder_input_im')
+# inp2 = Input(shape=(196,), name='encoder_input_imsum')
+# inp3 = Input(shape=(classifieroutputdim,),name='encoder_input_labels')
+
+x = Dense(intermediate_dim, activation='relu')(x17)
+
+x = Dense(intermediate_dim1, activation='relu')(x)
 # drop1 = Dropout(0.2)(x)
 z_mean = Dense(latent_dim, name='z_mean')(x)
 z_log_var = Dense(latent_dim, name='z_log_var')(x)
-
-inps = [input1,input2,input3]
+# inps = [input1,input2,input3]
 # use reparameterization trick to push the sampling out as input
 # note that "output_shape" isn't necessary with the TensorFlow backend
 z = Lambda(sampling, output_shape=(latent_dim,), name='z')([z_mean, z_log_var])
-
 # instantiate encoder model
-
 # encoder = Model(inputs, [z_mean, z_log_var, z], name='encoder')
 # encoder = Model(inputs = [input1,input2], [z_mean, z_log_var, z], name='encoder')
-encoder = Model(inps, [z_mean, z_log_var, z], name='encoder')
+encoder = Model(inps1, [z_mean, z_log_var, z], name='encoder')
 encoder.summary()
 # plot_model(encoder, to_file='vae_mlp_encoder.png', show_shapes=True)
 
@@ -682,7 +751,7 @@ x = Dense(intermediate_dim, activation='relu')(latent_inputs)
 x = Dense(intermediate_dim1, activation='relu')(x)
 # x = Dense(intermediate_dim1, activation='relu')(x)
 
-outputs = Dense(original_dim, activation='sigmoid')(x)
+outputs = Dense(196, activation='sigmoid')(x)
 
 
 # instantiate decoder model
@@ -702,13 +771,35 @@ classifier = Model(classifier_inputs,classifier_output,name="classifier")
 classifier.summary()
 
 # instantiate VAE model
-output1 = decoder(encoder(inps)[2])
-output2 = classifier(encoder(inps)[0]) # classifing on smaple values
+
+# input1 = 
+input_shape = (224,224,3,)
+input1 = Input(shape=input_shape, name='encoder_iut_im')
+input2 = Input(shape=input_shape, name='encoder_inpimsum')
+input3 = Input(shape=(classifieroutputdim,),name='enut_labels')
+
+# inps = [input1,input2,input3]
+# interlayer1 = featureextractor(input1)
+interlayer2 = featureextractor(input2)
+
+inps = [interlayer2,input3]
+
+output1 = decoder((encoder(input1)[2]))
+output2 = classifier(encoder(input1)[0])
+
+ # classifing on smaple values
 # output2 = classifier(encoder(inps)[0]) # classifing on z_means
 outputs = [output1,output2]
 
-vae = Model(inps, outputs, name='vae_mlp + classifier')
 
+vae = Model([input1,input2,input3], outputs, name='vae_mlp + classifier + vgg16')
+
+# input1 = Input(shape=input_shape, name='encoder_iut_im')
+# input2 = Input(shape=input_shape, name='encoder_inpimsum')
+# input3 = Input(shape=(classifieroutputdim,),name='enput_labels')
+
+# outputs = 
+# vaetop = 
 
 # In[ ]:
 
@@ -754,7 +845,7 @@ if __name__ == '__main__':
 #                         "--mse",
 #                         help=help_, action='store_true')
 #     args = parser.parse_args()
-    models = (encoder, decoder)
+    # models = (encoder, decoder)
     # data = (x_test, y_test)
 
 # here1
@@ -768,9 +859,9 @@ if __name__ == '__main__':
 #         reconstruction_loss = mse(inputs, outputs)
 #     else:
     reconstruction_loss = classcrossentropy(inps,
-                                              outputs)
+                                              outputs,interlayer1,interlayer2)
 
-    reconstruction_loss *= original_dim
+    # reconstruction_loss *= original_dim
     kl_loss = 1 + z_log_var - K.square(z_mean) - K.exp(z_log_var)
     kl_loss = K.sum(kl_loss, axis=-1)
     kl_loss = kl_loss*-0.5*kllosswt
@@ -788,11 +879,12 @@ if __name__ == '__main__':
         # train the autoencoder
     vae.fit([x_train,x_train2,trainonehotlabel],
             epochs=epochs,
-            batch_size=batch_size,
-            validation_data=([x_test,x_test2,testonehotlabel], None))
-    vae.save_weights('vae_mlp_mnist.h5')
+            batch_size=batch_size)
+            # validation_data=([x_test,x_test2,testonehotlabel], None))
+    # vae.save_weights('vae_mlp_mnist.h5')
 
 
+    exit()
 
     # for i in test2
     # plot_results(models,

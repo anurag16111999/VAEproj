@@ -114,8 +114,6 @@ def classcrossentropy(inputs,outputs):
 
     input1 = inputs[1]
     output1 = outputs[0]
-
-
     recon_loss = -tf.reduce_sum(
     input1 * tf.log(1e-5+output1) + 
     (1-input1) * tf.log(1e-5+1-output1), 
@@ -123,7 +121,6 @@ def classcrossentropy(inputs,outputs):
 )
     input2 = inputs[2]
     output2 = outputs[1]
-    
     
 #     print(input2.shape)
 #     print(output2.shape)
